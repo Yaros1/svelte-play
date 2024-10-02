@@ -1,1 +1,1 @@
-import{S as o,i,s as r,e as l,a as c,n,d}from"./index-Xa23svbH.js";function m(a){let e;return{c(){e=l("div"),e.textContent=`${u}`},m(t,s){c(t,e,s)},p:n,i:n,o:n,d(t){t&&d(e)}}}let u="B";class p extends o{constructor(e){super(),i(this,e,null,m,r,{})}}export{p as default};
+import{S as o,i,s as r,e as l,a as c,n,d}from"./index-DNItB6Co.js";function m(a){let e;return{c(){e=l("div"),e.textContent=`${u}`},m(t,s){c(t,e,s)},p:n,i:n,o:n,d(t){t&&d(e)}}}let u="B";class p extends o{constructor(e){super(),i(this,e,null,m,r,{})}}export{p as default};
