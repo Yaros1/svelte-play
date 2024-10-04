@@ -1,6 +1,7 @@
 import { SvelteComponent, init, safe_not_equal, element, space, text, attr, insert, set_input_value, append, listen, action_destroyer, set_data, is_function, noop, detach, run_all } from "svelte/internal";
-import "./index-BA6J_8Na.js";
-import "svelte";
+const PUBLIC_VERSION = "4";
+if (typeof window !== "undefined")
+  (window.__svelte || (window.__svelte = { v: /* @__PURE__ */ new Set() })).v.add(PUBLIC_VERSION);
 var top = "top";
 var bottom = "bottom";
 var right = "right";
@@ -1361,6 +1362,9 @@ var TOUCH_OPTIONS = {
 var TIPPY_DEFAULT_APPEND_TO = function TIPPY_DEFAULT_APPEND_TO2() {
   return document.body;
 };
+function hasOwnProperty(obj, key) {
+  return {}.hasOwnProperty.call(obj, key);
+}
 function getValueAtIndexOrReturn(value, index, defaultValue) {
   if (Array.isArray(value)) {
     var v = value[index];
@@ -1375,17 +1379,24 @@ function isType(value, type) {
 function invokeWithArgsOrReturn(value, args) {
   return typeof value === "function" ? value.apply(void 0, args) : value;
 }
-function debounce(fn5, ms) {
+function debounce(fn2, ms) {
   if (ms === 0) {
-    return fn5;
+    return fn2;
   }
   var timeout;
   return function(arg) {
     clearTimeout(timeout);
     timeout = setTimeout(function() {
-      fn5(arg);
+      fn2(arg);
     }, ms);
   };
+}
+function removeProperties(obj, keys) {
+  var clone = Object.assign({}, obj);
+  keys.forEach(function(key) {
+    delete clone[key];
+  });
+  return clone;
 }
 function splitBySpaces(value) {
   return value.split(/\s+/).filter(Boolean);
@@ -1542,6 +1553,56 @@ var isIE11 = isBrowser ? (
   // @ts-ignore
   !!window.msCrypto
 ) : false;
+function createMemoryLeakWarning(method) {
+  var txt = method === "destroy" ? "n already-" : " ";
+  return [method + "() was called on a" + txt + "destroyed instance. This is a no-op but", "indicates a potential memory leak."].join(" ");
+}
+function clean(value) {
+  var spacesAndTabs = /[ \t]{2,}/g;
+  var lineStartWithSpaces = /^[ \t]*/gm;
+  return value.replace(spacesAndTabs, " ").replace(lineStartWithSpaces, "").trim();
+}
+function getDevMessage(message) {
+  return clean("\n  %ctippy.js\n\n  %c" + clean(message) + "\n\n  %c👷‍ This is a development-only message. It will be removed in production.\n  ");
+}
+function getFormattedMessage(message) {
+  return [
+    getDevMessage(message),
+    // title
+    "color: #00C584; font-size: 1.3em; font-weight: bold;",
+    // message
+    "line-height: 1.5",
+    // footer
+    "color: #a6a095;"
+  ];
+}
+var visitedMessages;
+if (process.env.NODE_ENV !== "production") {
+  resetVisitedMessages();
+}
+function resetVisitedMessages() {
+  visitedMessages = /* @__PURE__ */ new Set();
+}
+function warnWhen(condition, message) {
+  if (condition && !visitedMessages.has(message)) {
+    var _console;
+    visitedMessages.add(message);
+    (_console = console).warn.apply(_console, getFormattedMessage(message));
+  }
+}
+function errorWhen(condition, message) {
+  if (condition && !visitedMessages.has(message)) {
+    var _console2;
+    visitedMessages.add(message);
+    (_console2 = console).error.apply(_console2, getFormattedMessage(message));
+  }
+}
+function validateTargets(targets) {
+  var didPassFalsyValue = !targets;
+  var didPassPlainObject = Object.prototype.toString.call(targets) === "[object Object]" && !targets.addEventListener;
+  errorWhen(didPassFalsyValue, ["tippy() was passed", "`" + String(targets) + "`", "as its targets (first) argument. Valid types are: String, Element,", "Element[], or NodeList."].join(" "));
+  errorWhen(didPassPlainObject, ["tippy() was passed a plain object which is not supported as an argument", "for virtual positioning. Use props.getReferenceClientRect instead."].join(" "));
+}
 var pluginProps = {
   animateFill: false,
   followCursor: false,
@@ -1610,6 +1671,9 @@ var defaultProps = Object.assign({
 }, pluginProps, renderProps);
 var defaultKeys = Object.keys(defaultProps);
 var setDefaultProps = function setDefaultProps2(partialProps) {
+  if (process.env.NODE_ENV !== "production") {
+    validateProps(partialProps, []);
+  }
   var keys = Object.keys(partialProps);
   keys.forEach(function(key) {
     defaultProps[key] = partialProps[key];
@@ -1659,6 +1723,25 @@ function evaluateProps(reference2, props) {
     content: out.aria.content === "auto" ? props.interactive ? null : "describedby" : out.aria.content
   };
   return out;
+}
+function validateProps(partialProps, plugins) {
+  if (partialProps === void 0) {
+    partialProps = {};
+  }
+  if (plugins === void 0) {
+    plugins = [];
+  }
+  var keys = Object.keys(partialProps);
+  keys.forEach(function(prop) {
+    var nonPluginProps = removeProperties(defaultProps, Object.keys(pluginProps));
+    var didPassUnknownProp = !hasOwnProperty(nonPluginProps, prop);
+    if (didPassUnknownProp) {
+      didPassUnknownProp = plugins.filter(function(plugin) {
+        return plugin.name === prop;
+      }).length === 0;
+    }
+    warnWhen(didPassUnknownProp, ["`" + prop + "`", "is not a valid prop. You may have spelled it incorrectly, or if it's", "a plugin, forgot to pass it in an array as props.plugins.", "\n\n", "All props: https://atomiks.github.io/tippyjs/v6/all-props/\n", "Plugins: https://atomiks.github.io/tippyjs/v6/plugins/"].join(" "));
+  });
 }
 var innerHTML = function innerHTML2() {
   return "innerHTML";
@@ -1819,6 +1902,9 @@ function createTippy(reference2, passedProps) {
     destroy
   };
   if (!props.render) {
+    if (process.env.NODE_ENV !== "production") {
+      errorWhen(true, "render() function has not been supplied.");
+    }
     return instance2;
   }
   var _props$render = props.render(instance2), popper2 = _props$render.popper, onUpdate = _props$render.onUpdate;
@@ -2099,13 +2185,13 @@ function createTippy(reference2, passedProps) {
     if (event.type === "mousemove" && isCursorOverReferenceOrPopper) {
       return;
     }
-    var popperTreeData = getNestedPopperTree().concat(popper2).map(function(popper22) {
+    var popperTreeData = getNestedPopperTree().concat(popper2).map(function(popper3) {
       var _instance$popperInsta;
-      var instance22 = popper22._tippy;
-      var state2 = (_instance$popperInsta = instance22.popperInstance) == null ? void 0 : _instance$popperInsta.state;
+      var instance3 = popper3._tippy;
+      var state2 = (_instance$popperInsta = instance3.popperInstance) == null ? void 0 : _instance$popperInsta.state;
       if (state2) {
         return {
-          popperRect: popper22.getBoundingClientRect(),
+          popperRect: popper3.getBoundingClientRect(),
           popperState: state2,
           props
         };
@@ -2153,7 +2239,7 @@ function createTippy(reference2, passedProps) {
       enabled: true,
       phase: "beforeWrite",
       requires: ["computeStyles"],
-      fn: function fn5(_ref2) {
+      fn: function fn2(_ref2) {
         var state2 = _ref2.state;
         if (getIsDefaultRenderFn()) {
           var _getDefaultTemplateCh = getDefaultTemplateChildren(), box = _getDefaultTemplateCh.box;
@@ -2234,6 +2320,9 @@ function createTippy(reference2, passedProps) {
     }
     instance2.state.isMounted = true;
     createPopperInstance();
+    if (process.env.NODE_ENV !== "production") {
+      warnWhen(instance2.props.interactive && appendTo === defaultProps.appendTo && node.nextElementSibling !== popper2, ["Interactive tippy element may not be accessible via keyboard", "navigation because it is not directly after the reference element", "in the DOM source order.", "\n\n", "Using a wrapper <div> or <span> tag around the reference element", "solves this by creating a new parentNode context.", "\n\n", "Specifying `appendTo: document.body` silences this warning, but it", "assumes you are using a focus management solution to handle", "keyboard navigation.", "\n\n", "See: https://atomiks.github.io/tippyjs/v6/accessibility/#interactivity"].join(" "));
+    }
   }
   function getNestedPopperTree() {
     return arrayFrom(popper2.querySelectorAll("[data-tippy-root]"));
@@ -2293,6 +2382,9 @@ function createTippy(reference2, passedProps) {
     cancelAnimationFrame(scheduleHideAnimationFrame);
   }
   function setProps(partialProps) {
+    if (process.env.NODE_ENV !== "production") {
+      warnWhen(instance2.state.isDestroyed, createMemoryLeakWarning("setProps"));
+    }
     if (instance2.state.isDestroyed) {
       return;
     }
@@ -2334,6 +2426,9 @@ function createTippy(reference2, passedProps) {
     });
   }
   function show() {
+    if (process.env.NODE_ENV !== "production") {
+      warnWhen(instance2.state.isDestroyed, createMemoryLeakWarning("show"));
+    }
     var isAlreadyVisible = instance2.state.isVisible;
     var isDestroyed = instance2.state.isDestroyed;
     var isDisabled = !instance2.state.isEnabled;
@@ -2390,6 +2485,9 @@ function createTippy(reference2, passedProps) {
     mount();
   }
   function hide2() {
+    if (process.env.NODE_ENV !== "production") {
+      warnWhen(instance2.state.isDestroyed, createMemoryLeakWarning("hide"));
+    }
     var isAlreadyHidden = !instance2.state.isVisible;
     var isDestroyed = instance2.state.isDestroyed;
     var isDisabled = !instance2.state.isEnabled;
@@ -2429,11 +2527,17 @@ function createTippy(reference2, passedProps) {
     }
   }
   function hideWithInteractivity(event) {
+    if (process.env.NODE_ENV !== "production") {
+      warnWhen(instance2.state.isDestroyed, createMemoryLeakWarning("hideWithInteractivity"));
+    }
     getDocument().addEventListener("mousemove", debouncedOnMouseMove);
     pushIfUnique(mouseMoveListeners, debouncedOnMouseMove);
     debouncedOnMouseMove(event);
   }
   function unmount() {
+    if (process.env.NODE_ENV !== "production") {
+      warnWhen(instance2.state.isDestroyed, createMemoryLeakWarning("unmount"));
+    }
     if (instance2.state.isVisible) {
       instance2.hide();
     }
@@ -2454,6 +2558,9 @@ function createTippy(reference2, passedProps) {
     invokeHook("onHidden", [instance2]);
   }
   function destroy() {
+    if (process.env.NODE_ENV !== "production") {
+      warnWhen(instance2.state.isDestroyed, createMemoryLeakWarning("destroy"));
+    }
     if (instance2.state.isDestroyed) {
       return;
     }
@@ -2470,11 +2577,20 @@ function tippy(targets, optionalProps) {
     optionalProps = {};
   }
   var plugins = defaultProps.plugins.concat(optionalProps.plugins || []);
+  if (process.env.NODE_ENV !== "production") {
+    validateTargets(targets);
+    validateProps(optionalProps, plugins);
+  }
   bindGlobalEventListeners();
   var passedProps = Object.assign({}, optionalProps, {
     plugins
   });
   var elements = getArrayOfElements(targets);
+  if (process.env.NODE_ENV !== "production") {
+    var isSingleContentElement = isElement(passedProps.content);
+    var isMoreThanOneReferenceElement = elements.length > 1;
+    warnWhen(isSingleContentElement && isMoreThanOneReferenceElement, ["tippy() was passed an Element as the `content` prop, but more than", "one tippy instance was created by this invocation. This means the", "content element will only be appended to the last tippy instance.", "\n\n", "Instead, pass the .innerHTML of the element, or use a function that", "returns a cloned version of the element instead.", "\n\n", "1) content: element.innerHTML\n", "2) content: () => element.cloneNode(true)"].join(" "));
+  }
   var instances = elements.reduce(function(acc, reference2) {
     var instance2 = reference2 && createTippy(reference2, passedProps);
     if (instance2) {
@@ -2615,12 +2731,12 @@ function instance($$self, $$props, $$invalidate) {
   }
   return [name, upper, banana, input_input_handler];
 }
-class B extends SvelteComponent {
+class MyComponent extends SvelteComponent {
   constructor(options) {
     super();
     init(this, options, instance, create_fragment, safe_not_equal, {});
   }
 }
 export {
-  B as default
+  MyComponent as default
 };
