@@ -1,5 +1,5 @@
 import { SvelteComponent, init, safe_not_equal, element, space, text, attr, insert, set_input_value, append, listen, action_destroyer, set_data, is_function, noop, detach, run_all } from "svelte/internal";
-import tippy from "https://unpkg.com/browse/tippy.js@6.3.7/dist/tippy.esm.js";
+import tippy from "https://unpkg.com/tippy.js@6.3.7/dist/tippy.esm.js";
 const PUBLIC_VERSION = "4";
 if (typeof window !== "undefined")
   (window.__svelte || (window.__svelte = { v: /* @__PURE__ */ new Set() })).v.add(PUBLIC_VERSION);
