@@ -1,90 +1,115 @@
-import { SvelteComponent, init, safe_not_equal, element, text, space, insert, append, listen, set_data, noop, detach } from "svelte/internal";
-import { onDestroy } from "svelte";
+import { SvelteComponent, init, safe_not_equal, element, space, text, attr, insert, set_input_value, append, listen, action_destroyer, set_data, is_function, noop, detach, run_all } from "svelte/internal";
+import tippy from "tippy.js";
 const PUBLIC_VERSION = "4";
 if (typeof window !== "undefined")
   (window.__svelte || (window.__svelte = { v: /* @__PURE__ */ new Set() })).v.add(PUBLIC_VERSION);
 function create_fragment(ctx) {
-  let button;
+  let input;
   let t0;
+  let div;
   let t1;
-  let t2;
-  let t3;
+  let banana_action;
   let mounted;
   let dispose;
   return {
     c() {
-      button = element("button");
-      t0 = text("count is ");
+      input = element("input");
+      t0 = space();
+      div = element("div");
       t1 = text(
-        /*count*/
+        /*upper*/
         ctx[1]
       );
-      t2 = space();
-      t3 = text(
+      attr(input, "type", "text");
+    },
+    m(target, anchor) {
+      insert(target, input, anchor);
+      set_input_value(
+        input,
         /*name*/
         ctx[0]
       );
-    },
-    m(target, anchor) {
-      insert(target, button, anchor);
-      append(button, t0);
-      append(button, t1);
-      append(button, t2);
-      append(button, t3);
+      insert(target, t0, anchor);
+      insert(target, div, anchor);
+      append(div, t1);
       if (!mounted) {
-        dispose = listen(
-          button,
-          "click",
-          /*increment*/
-          ctx[2]
-        );
+        dispose = [
+          listen(
+            input,
+            "input",
+            /*input_input_handler*/
+            ctx[3]
+          ),
+          action_destroyer(banana_action = /*banana*/
+          ctx[2].call(null, div, { content: (
+            /*name*/
+            ctx[0]
+          ) }))
+        ];
         mounted = true;
       }
     },
     p(ctx2, [dirty]) {
-      if (dirty & /*count*/
+      if (dirty & /*name*/
+      1 && input.value !== /*name*/
+      ctx2[0]) {
+        set_input_value(
+          input,
+          /*name*/
+          ctx2[0]
+        );
+      }
+      if (dirty & /*upper*/
       2) set_data(
         t1,
-        /*count*/
+        /*upper*/
         ctx2[1]
       );
-      if (dirty & /*name*/
-      1) set_data(
-        t3,
+      if (banana_action && is_function(banana_action.update) && dirty & /*name*/
+      1) banana_action.update.call(null, { content: (
         /*name*/
         ctx2[0]
-      );
+      ) });
     },
     i: noop,
     o: noop,
     d(detaching) {
       if (detaching) {
-        detach(button);
+        detach(input);
+        detach(t0);
+        detach(div);
       }
       mounted = false;
-      dispose();
+      run_all(dispose);
     }
   };
 }
 function instance($$self, $$props, $$invalidate) {
-  let count = 0;
-  let { name = "x" } = $$props;
-  const increment = () => {
-    $$invalidate(1, count += 1);
+  let name = "B";
+  let upper = 0;
+  const banana = (element2, options) => {
+    const tip = tippy(element2, options);
+    return {
+      update(options2) {
+        $$invalidate(1, upper++, upper);
+        tip.setProps(options2);
+        console.log("im updating", options2);
+      },
+      destroy() {
+        tip.destroy();
+      }
+    };
   };
-  onDestroy(() => {
-    console.log("im being destoryed");
-    $$invalidate(1, count = 0);
-  });
-  $$self.$$set = ($$props2) => {
-    if ("name" in $$props2) $$invalidate(0, name = $$props2.name);
-  };
-  return [name, count, increment];
+  function input_input_handler() {
+    name = this.value;
+    $$invalidate(0, name);
+  }
+  return [name, upper, banana, input_input_handler];
 }
 class MyComponent extends SvelteComponent {
   constructor(options) {
     super();
-    init(this, options, instance, create_fragment, safe_not_equal, { name: 0 });
+    init(this, options, instance, create_fragment, safe_not_equal, {});
   }
 }
 export {
