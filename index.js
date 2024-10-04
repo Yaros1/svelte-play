@@ -37,6 +37,7 @@
   	}
   }
 
+  // Export the component explicitly
   return Component;
 
 }));
